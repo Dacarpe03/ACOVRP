@@ -275,6 +275,17 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1078592276 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5003500273635822207, guid: 2ccc065c0e742224d94300bbe5ac106e, type: 3}
+  m_PrefabInstance: {fileID: 5003500274714151275}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dbbbd3eb7750bba439caed4a5fac2c15, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1385320177 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6071401635161504900, guid: e052b954d045e5846a1b66676cad1ac8, type: 3}
@@ -351,6 +362,34 @@ PrefabInstance:
     - target: {fileID: 6071401634929865896, guid: e052b954d045e5846a1b66676cad1ac8, type: 3}
       propertyPath: m_text
       value: hola
+      objectReference: {fileID: 0}
+    - target: {fileID: 6071401635161504902, guid: e052b954d045e5846a1b66676cad1ac8, type: 3}
+      propertyPath: m_OnEndEdit.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6071401635161504902, guid: e052b954d045e5846a1b66676cad1ac8, type: 3}
+      propertyPath: m_OnEndEdit.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6071401635161504902, guid: e052b954d045e5846a1b66676cad1ac8, type: 3}
+      propertyPath: m_OnEndEdit.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1078592276}
+    - target: {fileID: 6071401635161504902, guid: e052b954d045e5846a1b66676cad1ac8, type: 3}
+      propertyPath: m_OnEndEdit.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6071401635161504902, guid: e052b954d045e5846a1b66676cad1ac8, type: 3}
+      propertyPath: m_OnEndEdit.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: ReadNumberNodes
+      objectReference: {fileID: 0}
+    - target: {fileID: 6071401635161504902, guid: e052b954d045e5846a1b66676cad1ac8, type: 3}
+      propertyPath: m_OnEndEdit.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: NodeSpawnerScript, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 6071401635161504902, guid: e052b954d045e5846a1b66676cad1ac8, type: 3}
+      propertyPath: m_OnEndEdit.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
     - target: {fileID: 6071401635893169521, guid: e052b954d045e5846a1b66676cad1ac8, type: 3}
       propertyPath: m_Pivot.x
