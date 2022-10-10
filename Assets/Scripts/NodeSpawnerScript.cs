@@ -22,6 +22,7 @@ public class NodeSpawnerScript : MonoBehaviour
             newNode.GetComponent<NodeScript>().SetId(i);
             newNode.GetComponent<NodeScript>().SetDemand(1);
         }
+        FindObjectOfType<GraphScript>().GetNodes();
     }
 
 
@@ -39,6 +40,5 @@ public class NodeSpawnerScript : MonoBehaviour
         if (nNodesStr != ""){
             nNodes = int.Parse(nNodesStr);
         }
-        Debug.Log(nNodesStr);
     }
 }
