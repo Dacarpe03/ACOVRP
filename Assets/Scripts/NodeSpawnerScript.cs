@@ -11,12 +11,34 @@ public class NodeSpawnerScript : MonoBehaviour
     [Header("Node Prefab")]
     [SerializeField] GameObject nodeObject;
 
-    private void Start() {
+
+    /// <summary>
+    /// Spawns a series of nodes with random positions
+    /// </summary>
+    private void SpawnRandomly() {
         for (int i=0; i<nNodes ; i++){
             Vector2 position = new Vector2(Random.Range(-limit, limit), Random.Range(-limit, limit));
             GameObject newNode = Instantiate(nodeObject, position, Quaternion.identity);
             newNode.GetComponent<NodeScript>().SetId(i);
             newNode.GetComponent<NodeScript>().SetDemand(1);
         }
+    }
+
+
+    /// <summary>
+    /// Gets a the configuration parameters of the algorithm
+    /// </summary>
+    public void GetData(){
+
+        Destroy(FindObjectOfType<CanvasScript>().gameObject);
+
+        SpawnRandomly();
+    }
+
+    public void ReadNumberNodes(string nNodesStr){
+        if (nNodesStr != ""){
+            nNodes = int.Parse(nNodesStr);
+        }
+        Debug.Log(nNodesStr);
     }
 }
