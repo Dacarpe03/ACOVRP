@@ -28,6 +28,13 @@ public class NodeScript : MonoBehaviour
     }  
 
     /// <summary>
+    /// This function returns the transform of the node
+    /// </summary>
+    public Transform GetTransform(){
+        return this.transform;
+    }
+
+    /// <summary>
     /// This function returns the id of the node
     /// </summary>
     public int GetId(){
