@@ -9,17 +9,35 @@ public class GraphScript : MonoBehaviour
     [Header("Arc Prefab")]
     [SerializeField] GameObject arcVisualObject;
 
+    private float currentPheromoneWasted;
+    private int nAntColonies = 1;
 
-    private Dictionary<int[], Arc> arcs = new Dictionary<int[], Arc>();
+    private Dictionary<int, Dictionary<int[], Arc>> colonies = new Dictionary<int, Dictionary<int[], Arc>>();
     private List<ArcVisualScript> arcVisuals = new List<ArcVisualScript>();
 
     private class Arc {
+        private int nodeA;
+        private int nodeB;
         private float weight;
-        private float pheromoneLevel;
+        private float pheromoneLevel {get; set;}
 
-        public Arc(float weight, float pheromoneLevel){
+        public Arc(int nodeA, int nodeB, float weight, float pheromoneLevel){
+            this.nodeA = nodeA;
+            this.nodeB = nodeB;
             this.weight = weight;
             this.pheromoneLevel = pheromoneLevel;
+        }
+
+        public float GetPheromoneLevel(){
+            return this.pheromoneLevel;
+        }
+
+        public int GetNodeA(){
+            return this.nodeA;
+        }
+
+        public int GetNodeB(){
+            return this.nodeB;
         }
     }
 
@@ -30,37 +48,68 @@ public class GraphScript : MonoBehaviour
             nodes.Add(n.GetId(), n);
         }
 
-
-        foreach (KeyValuePair<int, NodeScript> kvp in nodes){
-            Debug.Log($"Key: {kvp.Key}, Value: {kvp.Value.GetId()}");
-        }
-
-        CreateArc(1, 1, 2, false);
-        CreateArc(2, 3, 4, false);
-        CreateArc(3, 0, 6, true);
+        CreateArcs();
+        UpdateVisualArcs();
     }
 
-    public void CreateArc(int colony, int nodeA, int nodeB, bool col){
-        GameObject newArcVisual = Instantiate(arcVisualObject, this.transform.position, Quaternion.identity);
-        Transform[] nodesTransforms = {nodes[nodeA].GetTransform(), nodes[nodeB].GetTransform()};
-        newArcVisual.GetComponent<ArcVisualScript>().SetUpLine(nodesTransforms);
-        if (col){
-            float alpha = 0.2f;
-            Gradient gradient = new Gradient();
-            gradient.SetKeys(
-                new GradientColorKey[] { new GradientColorKey(Color.red, 0.0f), new GradientColorKey(Color.red, 1.0f) },
-                new GradientAlphaKey[] { new GradientAlphaKey(alpha, 0.0f), new GradientAlphaKey(alpha, 1.0f) }
-            );
-            newArcVisual.GetComponent<LineRenderer>().colorGradient = gradient;
+    private void CreateArcs(){
+        for (int i = 0; i < nAntColonies; i++){
+            Dictionary<int[], Arc> arcs = new Dictionary<int[], Arc>();
+            colonies.Add(i, arcs);
+
+            foreach (NodeScript n in nodes.Values){
+                int currentNodeId = n.GetId();
+                foreach (NodeScript next in nodes.Values){
+                    int nextNodeId = next.GetId();
+                    if (currentNodeId != nextNodeId){
+                        CreateArc(i, currentNodeId, nextNodeId);
+                    }
+                }
+            }
         }
-        arcVisuals.Add(newArcVisual.GetComponent<ArcVisualScript>());
-
-        Arc newArc = new Arc(1f, 1f);
-
-        int[] arcId = {colony, nodeA, nodeB};
-        arcs.Add(arcId, newArc);
     }
 
+    public void CreateArc(int colony, int nodeA, int nodeB){
+        Arc newArc = new Arc(nodeA, nodeB, 1f, (nodeA * nodeB)+1);
+        int[] arcId = {nodeA, nodeB};
+        colonies[colony].Add(arcId, newArc);
+        Debug.Log($"{colonies[colony][arcId]}");
+    }
+
+    public void UpdateVisualArcs(){
+        for (int i = 0; i < nAntColonies; i++){
+
+            Dictionary<int[], Arc> arcs = colonies[i];
+            float maxPheromone = GetMaxPheromoneInColony(arcs);
+            foreach (Arc arc in arcs.Values){
+                GameObject newArcVisual = Instantiate(arcVisualObject, this.transform.position, Quaternion.identity);
+                Transform[] nodesTransforms = {nodes[arc.GetNodeA()].GetTransform(), nodes[arc.GetNodeB()].GetTransform()};
+                newArcVisual.GetComponent<ArcVisualScript>().SetUpLine(nodesTransforms);
+                
+                float alpha = arc.GetPheromoneLevel()/maxPheromone;
+                Gradient gradient = new Gradient();
+                gradient.SetKeys(
+                    new GradientColorKey[] { new GradientColorKey(Color.red, 0.0f), new GradientColorKey(Color.red, 1.0f) },
+                    new GradientAlphaKey[] { new GradientAlphaKey(alpha, 0.0f), new GradientAlphaKey(alpha, 1.0f) }
+                );
+
+                newArcVisual.GetComponent<LineRenderer>().colorGradient = gradient;
+                arcVisuals.Add(newArcVisual.GetComponent<ArcVisualScript>());
+            }
+        }
+    }
+
+
+    private float GetMaxPheromoneInColony(Dictionary<int[], Arc> arcs){
+        float maxPheromone = 0f;
+        foreach (Arc arc in arcs.Values){
+            float currentPheromoneLevel = arc.GetPheromoneLevel();
+            if (currentPheromoneLevel > maxPheromone){
+                maxPheromone = currentPheromoneLevel;
+            }
+        }
+        return maxPheromone;
+    }
 
     // Update is called once per frame
     void Update()
