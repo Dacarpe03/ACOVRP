@@ -39,6 +39,13 @@ public class GraphScript : MonoBehaviour
         public int GetNodeB(){
             return this.nodeB;
         }
+
+        public void PheromoneVariation(float variation){
+            this.pheromoneLevel += variation;
+            if (this.pheromoneLevel < 0){
+                pheromoneLevel = 0f;
+            }
+        }
     }
 
     public void GetNodes()
@@ -50,7 +57,9 @@ public class GraphScript : MonoBehaviour
 
         CreateArcs();
         UpdateVisualArcs();
+        StartDecrease();
     }
+
 
     private void CreateArcs(){
         for (int i = 0; i < nAntColonies; i++){
@@ -77,6 +86,10 @@ public class GraphScript : MonoBehaviour
     }
 
     public void UpdateVisualArcs(){
+        ArcVisualScript[] allObjects = FindObjectsOfType<ArcVisualScript>();
+        foreach(ArcVisualScript arc in allObjects) {
+            Destroy(arc.gameObject);
+        }
         for (int i = 0; i < nAntColonies; i++){
 
             Dictionary<int[], Arc> arcs = colonies[i];
@@ -84,17 +97,8 @@ public class GraphScript : MonoBehaviour
             foreach (Arc arc in arcs.Values){
                 GameObject newArcVisual = Instantiate(arcVisualObject, this.transform.position, Quaternion.identity);
                 Transform[] nodesTransforms = {nodes[arc.GetNodeA()].GetTransform(), nodes[arc.GetNodeB()].GetTransform()};
-                newArcVisual.GetComponent<ArcVisualScript>().SetUpLine(nodesTransforms);
-                
                 float alpha = arc.GetPheromoneLevel()/maxPheromone;
-                Gradient gradient = new Gradient();
-                gradient.SetKeys(
-                    new GradientColorKey[] { new GradientColorKey(Color.red, 0.0f), new GradientColorKey(Color.red, 1.0f) },
-                    new GradientAlphaKey[] { new GradientAlphaKey(alpha, 0.0f), new GradientAlphaKey(alpha, 1.0f) }
-                );
-
-                newArcVisual.GetComponent<LineRenderer>().colorGradient = gradient;
-                arcVisuals.Add(newArcVisual.GetComponent<ArcVisualScript>());
+                newArcVisual.GetComponent<ArcVisualScript>().Initialize(nodesTransforms, alpha);
             }
         }
     }
@@ -111,9 +115,25 @@ public class GraphScript : MonoBehaviour
         return maxPheromone;
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+    
+    IEnumerator WaitForNextStep(){
+        DecreasePheromones();
+        yield return new WaitForSeconds(1);
+        UpdateVisualArcs();
+        StartDecrease();
     }
+
+    private void StartDecrease(){
+        StartCoroutine(WaitForNextStep());
+    }
+
+    private void DecreasePheromones(){
+        for (int i = 0; i < nAntColonies; i++){
+            Dictionary<int[], Arc> arcs = colonies[i];
+            foreach (Arc arc in arcs.Values){
+                arc.PheromoneVariation(-1);
+            }
+        }
+    }
+
 }
