@@ -11,17 +11,15 @@ public class GraphScript : MonoBehaviour
 
 
     private Dictionary<int[], Arc> arcs = new Dictionary<int[], Arc>();
-    private class Arc {
+    private List<ArcVisualScript> arcVisuals = new List<ArcVisualScript>();
 
+    private class Arc {
         private float weight;
         private float pheromoneLevel;
 
-        private ArcVisualScript arcVisualObject;
-
-        public Arc(float weight, float pheromoneLevel, ArcVisualScript arcVisual){
+        public Arc(float weight, float pheromoneLevel){
             this.weight = weight;
             this.pheromoneLevel = pheromoneLevel;
-            this.arcVisualObject = arcVisual;
         }
     }
 
@@ -37,20 +35,32 @@ public class GraphScript : MonoBehaviour
             Debug.Log($"Key: {kvp.Key}, Value: {kvp.Value.GetId()}");
         }
 
-        CreateArc(1, 2);
-        CreateArc(3, 4);
-        CreateArc(0, 6);
+        CreateArc(1, 1, 2, false);
+        CreateArc(2, 3, 4, false);
+        CreateArc(3, 0, 6, true);
     }
 
-    public void CreateArc(int nodeA, int nodeB){
+    public void CreateArc(int colony, int nodeA, int nodeB, bool col){
         GameObject newArcVisual = Instantiate(arcVisualObject, this.transform.position, Quaternion.identity);
         Transform[] nodesTransforms = {nodes[nodeA].GetTransform(), nodes[nodeB].GetTransform()};
         newArcVisual.GetComponent<ArcVisualScript>().SetUpLine(nodesTransforms);
-        Arc newArc = new Arc(1f, 1f, newArcVisual.GetComponent<ArcVisualScript>());
+        if (col){
+            float alpha = 0.2f;
+            Gradient gradient = new Gradient();
+            gradient.SetKeys(
+                new GradientColorKey[] { new GradientColorKey(Color.red, 0.0f), new GradientColorKey(Color.red, 1.0f) },
+                new GradientAlphaKey[] { new GradientAlphaKey(alpha, 0.0f), new GradientAlphaKey(alpha, 1.0f) }
+            );
+            newArcVisual.GetComponent<LineRenderer>().colorGradient = gradient;
+        }
+        arcVisuals.Add(newArcVisual.GetComponent<ArcVisualScript>());
 
-        int[] arcId = {nodeA, nodeB};
+        Arc newArc = new Arc(1f, 1f);
+
+        int[] arcId = {colony, nodeA, nodeB};
         arcs.Add(arcId, newArc);
     }
+
 
     // Update is called once per frame
     void Update()
