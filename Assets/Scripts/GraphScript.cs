@@ -101,18 +101,28 @@ public class GraphScript : MonoBehaviour
     /// </summary>
     public void CreateArc(int colony, int nodeA, int nodeB){
         string arcId = CreateNodeKey(nodeB, nodeA);
-        if (colonies[colony].ContainsKey(arcId)){
-            Debug.Log($"Contains {arcId[0]}, {arcId[1]}");
-        }
         if (!colonies[colony].ContainsKey(arcId)){
             Debug.Log($"Not contains {arcId[0]}, {arcId[1]}");
-            Arc newArc = new Arc(nodeA, nodeB, 1f, (nodeA + nodeB)+1);
+            float distance = CalculateDistanceBetweenNodes(colony, nodeA, nodeB);
+            float pheromone = nodes[nodeA].GetDemand();
+            Arc newArc = new Arc(nodeA, nodeB, distance, pheromone);
             arcId = CreateNodeKey(nodeA, nodeB);
             colonies[colony].Add(arcId, newArc);
         } 
     }
 
     
+    /// <summary>
+    /// Calculate distance between nodes
+    /// </summary>
+    private float CalculateDistanceBetweenNodes(int colony, int nodeA, int nodeB){
+        Vector2 nodeAPosition = nodes[nodeA].GetComponent<Transform>().position;
+        Vector2 nodeBPosition = nodes[nodeB].GetComponent<Transform>().position;
+        float distance = Vector2.Distance(nodeAPosition, nodeBPosition);
+        return distance;
+    }
+
+
     /// <summary>
     /// Updates the graph visually with the arcs
     /// <summary>
@@ -126,7 +136,7 @@ public class GraphScript : MonoBehaviour
             Dictionary<string, Arc> arcs = colonies[i];
             float maxPheromone = GetMaxPheromoneInColony(arcs);
             if (maxPheromone == 0){
-                SceneManager.LoadScene(0);
+                //SceneManager.LoadScene(0);
             }
             foreach (Arc arc in arcs.Values){
                 GameObject newArcVisual = Instantiate(arcVisualObject, this.transform.position, Quaternion.identity);
@@ -158,7 +168,7 @@ public class GraphScript : MonoBehaviour
     /// </summary>
     IEnumerator WaitForNextStep(){
         DecreasePheromones();
-        yield return new WaitForSeconds(0.3f);
+        yield return new WaitForSeconds(0.5f);
         UpdateVisualArcs();
         StartDecrease();
     }
@@ -190,6 +200,17 @@ public class GraphScript : MonoBehaviour
     private string CreateNodeKey(int nodeA, int nodeB){
         string key = nodeA.ToString() + ',' + nodeB.ToString();
         return key;
+    }
+
+
+    /// <summary>
+    /// Algorithm
+    /// </summary>
+    private void ACOVRP(){
+        int currentIteration = 0;
+        while (currentIteration < 50){
+
+        }
     }
 
 }

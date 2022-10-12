@@ -3,7 +3,7 @@ using UnityEngine;
 public class NodeScript : MonoBehaviour
 {   
     private int id = -1;
-    private int demand = 1;
+    private float demand = 1;
     private bool center = false;
 
     
@@ -17,7 +17,7 @@ public class NodeScript : MonoBehaviour
     /// <summary>
     /// This function sets the demand of the node
     /// </summary>
-    public void SetDemand(int demand){
+    public void SetDemand(float demand){
         this.demand = demand;
     }
 
@@ -27,7 +27,7 @@ public class NodeScript : MonoBehaviour
     /// </summary>
     public void SetCenter(){
         center = true;
-        this.transform.localScale = new Vector3(3f, 3f, 1f);
+        this.transform.localScale = new Vector3(2f, 2f, 1f);
     }
 
     /// <summary>
@@ -54,7 +54,7 @@ public class NodeScript : MonoBehaviour
     /// <summary>
     /// This function returns the demand of the node
     /// </summary>
-    public int GetDemand(){
+    public float GetDemand(){
         return this.demand;
     }
 
