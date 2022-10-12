@@ -16,11 +16,16 @@ public class NodeSpawnerScript : MonoBehaviour
     /// Spawns a series of nodes with random positions
     /// </summary>
     private void SpawnRandomly() {
+        bool center = false;
         for (int i=0; i<nNodes ; i++){
             Vector2 position = new Vector2(Random.Range(-limit, limit), Random.Range(-limit, limit));
             GameObject newNode = Instantiate(nodeObject, position, Quaternion.identity);
             newNode.GetComponent<NodeScript>().SetId(i);
             newNode.GetComponent<NodeScript>().SetDemand(1);
+            if (!center){
+                newNode.GetComponent<NodeScript>().SetCenter();
+                center = true;
+            }
         }
         FindObjectOfType<GraphScript>().GetNodes();
     }

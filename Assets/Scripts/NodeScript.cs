@@ -4,6 +4,7 @@ public class NodeScript : MonoBehaviour
 {   
     private int id = -1;
     private int demand = 1;
+    private bool center = false;
 
     
     /// <summary>
@@ -18,6 +19,15 @@ public class NodeScript : MonoBehaviour
     /// </summary>
     public void SetDemand(int demand){
         this.demand = demand;
+    }
+
+    
+    /// <summary>
+    /// This function makes the node the center where the vehicles go out from
+    /// </summary>
+    public void SetCenter(){
+        center = true;
+        this.transform.localScale = new Vector3(3f, 3f, 1f);
     }
 
     /// <summary>
@@ -46,6 +56,14 @@ public class NodeScript : MonoBehaviour
     /// </summary>
     public int GetDemand(){
         return this.demand;
+    }
+
+
+    /// <summary>
+    /// This function returns if the node is the center
+    /// </summary>
+    public bool IsCenter(){
+        return this.center;
     }
 
     /// <summary>

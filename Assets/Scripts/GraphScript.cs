@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GraphScript : MonoBehaviour
 {
@@ -12,9 +13,10 @@ public class GraphScript : MonoBehaviour
     [Header("Algorithm parameters")]
     private float currentPheromoneWasted;
     private int nAntColonies = 1;
+    private int centerNode = 0;
 
     [Header("Arcs of the graph")]
-    private Dictionary<int, Dictionary<int[], Arc>> colonies = new Dictionary<int, Dictionary<int[], Arc>>();
+    private Dictionary<int, Dictionary<string, Arc>> colonies = new Dictionary<int, Dictionary<string, Arc>>();
 
 
     /// <summary>
@@ -60,6 +62,9 @@ public class GraphScript : MonoBehaviour
     {
         NodeScript[] existingNodes = FindObjectsOfType<NodeScript>();
         foreach (NodeScript n in existingNodes){
+            if (n.IsCenter()){
+                this.centerNode = n.GetId();
+            }
             nodes.Add(n.GetId(), n);
         }
 
@@ -74,7 +79,7 @@ public class GraphScript : MonoBehaviour
     /// </summary>
     private void CreateArcs(){
         for (int i = 0; i < nAntColonies; i++){
-            Dictionary<int[], Arc> arcs = new Dictionary<int[], Arc>();
+            Dictionary<string, Arc> arcs = new Dictionary<string, Arc>();
             colonies.Add(i, arcs);
 
             foreach (NodeScript n in nodes.Values){
@@ -86,6 +91,7 @@ public class GraphScript : MonoBehaviour
                     }
                 }
             }
+            Debug.Log(colonies[i].Count);
         }
     }
 
@@ -94,9 +100,16 @@ public class GraphScript : MonoBehaviour
     /// Creates an arc of a colony between to nodes
     /// </summary>
     public void CreateArc(int colony, int nodeA, int nodeB){
-        Arc newArc = new Arc(nodeA, nodeB, 1f, (nodeA * nodeB)+1);
-        int[] arcId = {nodeA, nodeB};
-        colonies[colony].Add(arcId, newArc);
+        string arcId = CreateNodeKey(nodeB, nodeA);
+        if (colonies[colony].ContainsKey(arcId)){
+            Debug.Log($"Contains {arcId[0]}, {arcId[1]}");
+        }
+        if (!colonies[colony].ContainsKey(arcId)){
+            Debug.Log($"Not contains {arcId[0]}, {arcId[1]}");
+            Arc newArc = new Arc(nodeA, nodeB, 1f, (nodeA + nodeB)+1);
+            arcId = CreateNodeKey(nodeA, nodeB);
+            colonies[colony].Add(arcId, newArc);
+        } 
     }
 
     
@@ -110,8 +123,11 @@ public class GraphScript : MonoBehaviour
         }
         for (int i = 0; i < nAntColonies; i++){
 
-            Dictionary<int[], Arc> arcs = colonies[i];
+            Dictionary<string, Arc> arcs = colonies[i];
             float maxPheromone = GetMaxPheromoneInColony(arcs);
+            if (maxPheromone == 0){
+                SceneManager.LoadScene(0);
+            }
             foreach (Arc arc in arcs.Values){
                 GameObject newArcVisual = Instantiate(arcVisualObject, this.transform.position, Quaternion.identity);
                 Transform[] nodesTransforms = {nodes[arc.GetNodeA()].GetTransform(), nodes[arc.GetNodeB()].GetTransform()};
@@ -125,7 +141,7 @@ public class GraphScript : MonoBehaviour
     /// <summary>
     /// Gets the maximum pheromone of the colony
     /// </summary>
-    private float GetMaxPheromoneInColony(Dictionary<int[], Arc> arcs){
+    private float GetMaxPheromoneInColony(Dictionary<string, Arc> arcs){
         float maxPheromone = 0f;
         foreach (Arc arc in arcs.Values){
             float currentPheromoneLevel = arc.GetPheromoneLevel();
@@ -142,7 +158,7 @@ public class GraphScript : MonoBehaviour
     /// </summary>
     IEnumerator WaitForNextStep(){
         DecreasePheromones();
-        yield return new WaitForSeconds(1);
+        yield return new WaitForSeconds(0.3f);
         UpdateVisualArcs();
         StartDecrease();
     }
@@ -161,11 +177,19 @@ public class GraphScript : MonoBehaviour
     /// </summary>
     private void DecreasePheromones(){
         for (int i = 0; i < nAntColonies; i++){
-            Dictionary<int[], Arc> arcs = colonies[i];
+            Dictionary<string, Arc> arcs = colonies[i];
             foreach (Arc arc in arcs.Values){
                 arc.PheromoneVariation(-1);
             }
         }
+    }
+
+    /// <summary>
+    /// Creates the arc id for the dictionary
+    /// <summary>
+    private string CreateNodeKey(int nodeA, int nodeB){
+        string key = nodeA.ToString() + ',' + nodeB.ToString();
+        return key;
     }
 
 }
