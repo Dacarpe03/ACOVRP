@@ -19,10 +19,10 @@ public class ArcVisualScript : MonoBehaviour
     /// <summary>
     /// Call the different steps of creating the line
     /// </summary>
-    public void Initialize(Transform[] points, float alpha){
+    public void Initialize(int colony, Transform[] points, float alpha){
         SetUpLine(points);
         DrawLine();
-        SetAlpha(alpha);
+        ColorLine(colony, alpha);
     }
 
     /// <summary>
@@ -31,7 +31,6 @@ public class ArcVisualScript : MonoBehaviour
     private void SetUpLine(Transform[] points){
         arcRenderer.positionCount = points.Length;
         this.arcPoints = points;
-        Debug.Log(arcPoints);
         DrawLine();
     }
 
@@ -46,14 +45,22 @@ public class ArcVisualScript : MonoBehaviour
 
 
     /// <summary>
-    /// Sets the gradient of the line
+    /// Sets the color and gradient of the line
     /// </summary>
-    private void SetAlpha(float alpha){
+    private void ColorLine(int colony, float alpha){
+        Color colonyColor = SelectColonyColor();
         Gradient gradient = new Gradient();
         gradient.SetKeys(
-            new GradientColorKey[] { new GradientColorKey(Color.red, 0.0f), new GradientColorKey(Color.red, 1.0f) },
+            new GradientColorKey[] { new GradientColorKey(colonyColor, 0.0f), new GradientColorKey(colonyColor, 1.0f) },
             new GradientAlphaKey[] { new GradientAlphaKey(alpha, 0.0f), new GradientAlphaKey(alpha, 1.0f) }
         );
         arcRenderer.colorGradient = gradient;
+    }
+
+    /// <summary>
+    /// Selects the colony color
+    /// </summary>
+    private Color SelectColonyColor(){
+        return Color.red;
     }
 }

@@ -36,6 +36,10 @@ public class NodeSpawnerScript : MonoBehaviour
         SpawnRandomly();
     }
 
+
+    /// <summary>
+    /// Updates the number of nodes
+    /// </summary>
     public void ReadNumberNodes(string nNodesStr){
         if (nNodesStr != ""){
             nNodes = int.Parse(nNodesStr);

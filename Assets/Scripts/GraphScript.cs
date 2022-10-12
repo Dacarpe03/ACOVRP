@@ -9,12 +9,17 @@ public class GraphScript : MonoBehaviour
     [Header("Arc Prefab")]
     [SerializeField] GameObject arcVisualObject;
 
+    [Header("Algorithm parameters")]
     private float currentPheromoneWasted;
     private int nAntColonies = 1;
 
+    [Header("Arcs of the graph")]
     private Dictionary<int, Dictionary<int[], Arc>> colonies = new Dictionary<int, Dictionary<int[], Arc>>();
-    private List<ArcVisualScript> arcVisuals = new List<ArcVisualScript>();
 
+
+    /// <summary>
+    /// Class containing info of an arc
+    /// </summary>
     private class Arc {
         private int nodeA;
         private int nodeB;
@@ -48,6 +53,9 @@ public class GraphScript : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Gets the created nodes and adds them to the graph
+    /// </summary>
     public void GetNodes()
     {
         NodeScript[] existingNodes = FindObjectsOfType<NodeScript>();
@@ -61,6 +69,9 @@ public class GraphScript : MonoBehaviour
     }
 
 
+    /// <summary>
+    /// Creates the arcs between the nodes
+    /// </summary>
     private void CreateArcs(){
         for (int i = 0; i < nAntColonies; i++){
             Dictionary<int[], Arc> arcs = new Dictionary<int[], Arc>();
@@ -78,13 +89,20 @@ public class GraphScript : MonoBehaviour
         }
     }
 
+
+    /// <summary>
+    /// Creates an arc of a colony between to nodes
+    /// </summary>
     public void CreateArc(int colony, int nodeA, int nodeB){
         Arc newArc = new Arc(nodeA, nodeB, 1f, (nodeA * nodeB)+1);
         int[] arcId = {nodeA, nodeB};
         colonies[colony].Add(arcId, newArc);
-        Debug.Log($"{colonies[colony][arcId]}");
     }
 
+    
+    /// <summary>
+    /// Updates the graph visually with the arcs
+    /// <summary>
     public void UpdateVisualArcs(){
         ArcVisualScript[] allObjects = FindObjectsOfType<ArcVisualScript>();
         foreach(ArcVisualScript arc in allObjects) {
@@ -98,12 +116,15 @@ public class GraphScript : MonoBehaviour
                 GameObject newArcVisual = Instantiate(arcVisualObject, this.transform.position, Quaternion.identity);
                 Transform[] nodesTransforms = {nodes[arc.GetNodeA()].GetTransform(), nodes[arc.GetNodeB()].GetTransform()};
                 float alpha = arc.GetPheromoneLevel()/maxPheromone;
-                newArcVisual.GetComponent<ArcVisualScript>().Initialize(nodesTransforms, alpha);
+                newArcVisual.GetComponent<ArcVisualScript>().Initialize(i, nodesTransforms, alpha);
             }
         }
     }
 
 
+    /// <summary>
+    /// Gets the maximum pheromone of the colony
+    /// </summary>
     private float GetMaxPheromoneInColony(Dictionary<int[], Arc> arcs){
         float maxPheromone = 0f;
         foreach (Arc arc in arcs.Values){
@@ -116,6 +137,9 @@ public class GraphScript : MonoBehaviour
     }
 
     
+    /// <summary>
+    /// Just to test
+    /// </summary>
     IEnumerator WaitForNextStep(){
         DecreasePheromones();
         yield return new WaitForSeconds(1);
@@ -123,10 +147,18 @@ public class GraphScript : MonoBehaviour
         StartDecrease();
     }
 
+
+    /// <summary>
+    /// Just to test
+    /// </summary>
     private void StartDecrease(){
         StartCoroutine(WaitForNextStep());
     }
 
+
+    /// <summary>
+    /// Just to test
+    /// </summary>
     private void DecreasePheromones(){
         for (int i = 0; i < nAntColonies; i++){
             Dictionary<int[], Arc> arcs = colonies[i];
