@@ -11,7 +11,7 @@ public class NodeScript : MonoBehaviour
     /// Function to assign the id of the node
     /// </summary>
     public void SetId(int id){
-        this.id = id;
+        this.id = id-1;
     }
     
     /// <summary>
