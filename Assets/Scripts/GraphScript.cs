@@ -313,7 +313,7 @@ public class GraphScript : MonoBehaviour
                     
                 }
             }
-
+            currentAnt.AddSolutionNode(centerNode, 0f);
             bestSolution = currentAnt.GetSolution();
             currentIteration += 1;
         }
