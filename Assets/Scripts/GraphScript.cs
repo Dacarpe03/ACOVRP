@@ -11,9 +11,12 @@ public class GraphScript : MonoBehaviour
     [SerializeField] GameObject arcVisualObject;
 
     [Header("Algorithm parameters")]
+    private int maxIterations = 1000;
+    private int iterationBlock = 25;
     private float currentPheromoneWasted;
     private int nAntColonies = 1;
     private int centerNode = 0;
+    private float vehicleCapacity = 100f;
 
     [Header("Arcs of the graph")]
     private Dictionary<int, Dictionary<string, Arc>> colonies = new Dictionary<int, Dictionary<string, Arc>>();
@@ -54,6 +57,15 @@ public class GraphScript : MonoBehaviour
             }
         }
     }
+
+
+    /// <summary>
+    /// Capacity
+    /// </summary>
+    public void SetCapacity(float capacity){
+        this.vehicleCapacity = capacity;
+    }
+
 
     /// <summary>
     /// Gets the created nodes and adds them to the graph
@@ -208,9 +220,18 @@ public class GraphScript : MonoBehaviour
     /// </summary>
     private void ACOVRP(){
         int currentIteration = 0;
-        while (currentIteration < 50){
-
+        int subIterations = 0;
+        while (currentIteration < maxIterations){
+            if (subIterations > iterationBlock){
+                UpdateBestSolution();
+            }
         }
     }
+
+
+    /// <summary>
+    /// Updates the arcs based on the best solution found
+    /// </summary>
+    private void UpdateBestSolution(){}
 
 }

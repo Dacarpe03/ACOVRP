@@ -7,6 +7,7 @@ public class NodeSpawnerScript : MonoBehaviour
     [Header("Number of nodes to spawn")]
     [SerializeField] private int nNodes = 5;
     [SerializeField] private float limit = 50f;
+    private float capacityOne = 160f;
 
     [Header("Node Prefab")]
     [SerializeField] GameObject nodeObject;
@@ -313,6 +314,7 @@ public class NodeSpawnerScript : MonoBehaviour
         newNode.GetComponent<NodeScript>().SetDemand(0f);
         newNode.GetComponent<NodeScript>().SetCenter();
 
+        FindObjectOfType<GraphScript>().SetCapacity(this.capacityOne);
         FindObjectOfType<GraphScript>().GetNodes();
     }
 
