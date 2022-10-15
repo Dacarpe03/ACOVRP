@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class NodeSpawnerScript : MonoBehaviour
 {
@@ -21,6 +22,7 @@ public class NodeSpawnerScript : MonoBehaviour
     private float pheromoneDropFactor = 1f;
     private float pheromoneEvaporation = 0.1f;
     private int candidateListSize = 50;
+    private bool multipleColonies = false;
 
     /// <summary>
     /// Spawns a series of nodes with random positions
@@ -133,6 +135,12 @@ public class NodeSpawnerScript : MonoBehaviour
         if (strEvaporation != ""){
             pheromoneEvaporation = float.Parse(strEvaporation);
         }
+    }
+
+    public void ToggleValueChanged(bool change)
+    {
+        multipleColonies = !multipleColonies;
+        Debug.Log(multipleColonies);
     }
 
 
