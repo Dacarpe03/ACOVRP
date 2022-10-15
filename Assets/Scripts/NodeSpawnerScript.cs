@@ -12,6 +12,15 @@ public class NodeSpawnerScript : MonoBehaviour
     [Header("Node Prefab")]
     [SerializeField] GameObject nodeObject;
 
+    [Header("Algorithm parameters")]
+    private int iterations = 100;
+    private int numberAnts = 25;
+    private float vehicleCapacity = 160f;
+    private float q0 = 0.9f;
+    private float beta = 2.3f;
+    private float pheromoneDropFactor = 1f;
+    private float pheromoneEvaporation = 0.1f;
+    private int candidateListSize = 50;
 
     /// <summary>
     /// Spawns a series of nodes with random positions
@@ -53,6 +62,79 @@ public class NodeSpawnerScript : MonoBehaviour
             nNodes = int.Parse(nNodesStr);
         }
     }
+
+    /// <summary>
+    /// Updates the number of iterations
+    /// </summary>
+    public void ReadNumberIterations(string niterations){
+        if (niterations != ""){
+            iterations = int.Parse(niterations);
+        }
+    }
+
+    /// <summary>
+    /// Updates the number of ants
+    /// </summary>
+    public void ReadNumberAnts(string nAnts){
+        if (nAnts != ""){
+            numberAnts = int.Parse(nAnts);
+        }
+    }
+
+    /// <summary>
+    /// Updates the size of candidate list
+    /// </summary>
+    public void ReadNCandidates(string nCandidates){
+        if (nCandidates != ""){
+            candidateListSize = int.Parse(nCandidates);
+        }
+    }
+
+    /// <summary>
+    /// Updates the size of candidate list
+    /// </summary>
+    public void Readq0(string strQ0){
+        if (strQ0 != ""){
+            q0 = float.Parse(strQ0);
+        }
+    }
+
+    /// <summary>
+    /// Updates the size of candidate list
+    /// </summary>
+    public void ReadCapacity(string strCapacity){
+        if (strCapacity != ""){
+            vehicleCapacity = float.Parse(strCapacity);
+        }
+    }
+
+    /// <summary>
+    /// Updates the size of candidate list
+    /// </summary>
+    public void ReadBeta(string strBeta){
+        if (strBeta != ""){
+            beta = float.Parse(strBeta);
+        }
+    }
+
+    /// <summary>
+    /// Updates the size of candidate list
+    /// </summary>
+    public void ReadPheromoneDrop(string strPD){
+        if (strPD != ""){
+            pheromoneDropFactor = float.Parse(strPD);
+        }
+    }
+
+    /// <summary>
+    /// Updates the size of candidate list
+    /// </summary>
+    public void ReadEvaporation(string strEvaporation){
+        if (strEvaporation != ""){
+            pheromoneEvaporation = float.Parse(strEvaporation);
+        }
+    }
+
 
 
     public void SpawnC1(){
