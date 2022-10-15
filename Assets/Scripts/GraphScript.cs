@@ -12,11 +12,12 @@ public class GraphScript : MonoBehaviour
     [SerializeField] GameObject arcVisualObject;
 
     [Header("Algorithm parameters")]
+    private bool multipleColonies = true;
     private int maxIterations = 2000;
     private int antsNumber = 25;
     private int nAntColonies = 1;
     private int centerNode = 0;
-    private float vehicleCapacity = 101f;
+    private float vehicleCapacity = 51;
     private float q0 = 0.2f;
     private float initialPheromone = 0.001f;
     private float beta = 2.3f;
@@ -67,7 +68,6 @@ public class GraphScript : MonoBehaviour
             this.pheromoneLevel += variation;
             if (this.pheromoneLevel < 0){
                 pheromoneLevel = 0f;
-                Debug.Log("Menor que cero");
             }
         }
 
@@ -132,7 +132,7 @@ public class GraphScript : MonoBehaviour
             nodes.Add(n.GetId(), n);
         }
 
-        CreateArcs();
+        CreateArcs(0);
         StartProgram();
     }
 
@@ -140,18 +140,15 @@ public class GraphScript : MonoBehaviour
     /// <summary>
     /// Creates the arcs between the nodes
     /// </summary>
-    private void CreateArcs(){
-        for (int i = 0; i < nAntColonies; i++){
-            Dictionary<string, Arc> arcs = new Dictionary<string, Arc>();
-            colonies.Add(i, arcs);
-
-            foreach (NodeScript n in nodes.Values){
-                int currentNodeId = n.GetId();
-                foreach (NodeScript next in nodes.Values){
-                    int nextNodeId = next.GetId();
-                    if (currentNodeId != nextNodeId){
-                        CreateArc(i, currentNodeId, nextNodeId);
-                    }
+    private void CreateArcs(int colony){
+        Dictionary<string, Arc> arcs = new Dictionary<string, Arc>();
+        colonies.Add(colony, arcs);
+        foreach (NodeScript n in nodes.Values){
+            int currentNodeId = n.GetId();
+            foreach (NodeScript next in nodes.Values){
+                int nextNodeId = next.GetId();
+                if (currentNodeId != nextNodeId){
+                    CreateArc(colony, currentNodeId, nextNodeId);
                 }
             }
         }
@@ -202,18 +199,15 @@ public class GraphScript : MonoBehaviour
     /// <summary>
     /// Updates the graph visually with the arcs
     /// <summary>
-    public void UpdateVisualArcs(){
+    public void UpdateVisualArcs(int maxColony){
         ArcVisualScript[] allObjects = FindObjectsOfType<ArcVisualScript>();
         foreach(ArcVisualScript arc in allObjects) {
             Destroy(arc.gameObject);
         }
-        for (int i = 0; i < nAntColonies; i++){
-
+        for (int i = 0; i < maxColony+1; i++){
             Dictionary<string, Arc> arcs = colonies[i];
             float maxPheromone = GetMaxPheromoneInColony(arcs);
-            if (maxPheromone == 0){
-                //SceneManager.LoadScene(0);
-            }
+            Debug.Log("Next colony");
             foreach (Arc arc in arcs.Values){
                 GameObject newArcVisual = Instantiate(arcVisualObject, this.transform.position, Quaternion.identity);
                 Transform[] nodesTransforms = {nodes[arc.GetNodeA()].GetTransform(), nodes[arc.GetNodeB()].GetTransform()};
@@ -293,11 +287,11 @@ public class GraphScript : MonoBehaviour
 
         float bestDistance = float.MaxValue;
         int currentIteration = 0;
-
+        
+        int maxColony = 0;
         while (currentIteration < maxIterations){
             List<List<int>> solutions = new List<List<int>>();
             List<float> solutionDistances = new List<float>();
-
             for (int i=0; i<antsNumber; i++){
                 // Create new ant
                 Ant currentAnt = new Ant(vehicleCapacity);
@@ -336,6 +330,14 @@ public class GraphScript : MonoBehaviour
 
                             currentAnt.ResetCapacity();
                             currentNode = centerNode;
+
+                            if (multipleColonies){
+                                currentColony += 1;
+                                Debug.Log("New colony");
+                                if (!colonies.ContainsKey(currentColony)){
+                                    CreateArcs(currentColony);
+                                }
+                            }
                     }
                 }
 
@@ -350,11 +352,11 @@ public class GraphScript : MonoBehaviour
                     bestSolution = currentAnt.GetSolution();
                     bestDistance = currentDistance;
                 }
-                UpdateVisualArcs();
-                ShowBestSolution(currentAnt.GetSolution());
-                yield return new WaitForSeconds(0.01f);
-            }
 
+                
+                maxColony = currentColony;
+            }
+            
             UpdateEvaporationInTrails();
             for (int i=0; i<solutions.Count; i++){
                 UpdatePheromoneTrails(solutions[i], solutionDistances[i]);
@@ -364,13 +366,13 @@ public class GraphScript : MonoBehaviour
             Debug.Log($"Iteration {currentIteration}, Best distance: {bestDistance}");
             currentIteration += 1;
             
-            UpdateVisualArcs();
+            UpdateVisualArcs(maxColony);
             ShowBestSolution(bestSolution);
             yield return new WaitForSeconds(1f);
         }
 
         
-        UpdateVisualArcs();
+        UpdateVisualArcs(maxColony);
         ShowBestSolution(bestSolution);
 
     }
@@ -394,6 +396,9 @@ public class GraphScript : MonoBehaviour
             string arcId = GetArcId(currentColony, nodeA, nodeB);
             colonies[currentColony][arcId].PheromoneVariation(pheromoneDropFactor/solutionDistance);
             nodeA = nodeB;
+            if (nodeA == centerNode && multipleColonies){
+                currentColony += 1;
+            }
         }
     }
 
