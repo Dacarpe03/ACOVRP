@@ -40,7 +40,7 @@ public class NodeSpawnerScript : MonoBehaviour
 
         Destroy(FindObjectOfType<CanvasScript>().gameObject);
 
-        SpawnRandomly();
+        SpawnC1();
     }
 
 

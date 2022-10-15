@@ -12,15 +12,18 @@ public class GraphScript : MonoBehaviour
     [SerializeField] GameObject arcVisualObject;
 
     [Header("Algorithm parameters")]
-    private int maxIterations = 1;
+    private int maxIterations = 5000;
     private int iterationBlock = 25;
     private float currentPheromoneWasted;
     private int nAntColonies = 1;
     private int centerNode = 0;
     private float vehicleCapacity = 101f;
-    private float q0 = 0f;
-    private float initialPheromone = 0.1f;
+    private float q0 = 0.9f;
+    private float initialPheromone = 0.001f;
     private float beta = 2.3f;
+    private float pheromoneDropFactor = 1f;
+    private float pheromoneEvaporation = 0.1f;
+    private int candidateListSize = 5;
 
     [Header("Solution parameters")]
     private float minDistance = float.MaxValue;
@@ -66,6 +69,10 @@ public class GraphScript : MonoBehaviour
             if (this.pheromoneLevel < 0){
                 pheromoneLevel = 0f;
             }
+        }
+
+        public void PheromoneEvaporation(float evaporationRate){
+            this.pheromoneLevel = this.pheromoneLevel * (1 - evaporationRate);
         }
     }
 
@@ -126,8 +133,7 @@ public class GraphScript : MonoBehaviour
         }
 
         CreateArcs();
-        UpdateVisualArcs();
-        StartDecrease();
+        StartProgram();
     }
 
 
@@ -148,7 +154,6 @@ public class GraphScript : MonoBehaviour
                     }
                 }
             }
-            Debug.Log(colonies[i].Count);
         }
     }
 
@@ -179,6 +184,9 @@ public class GraphScript : MonoBehaviour
     }
 
 
+    /// <summary>
+    /// Displays graphically the best solution
+    /// </summary>
     private void ShowBestSolution(List<int> solution){
         Transform[] nodesTransforms = new Transform[solution.Count];
         int i=0;
@@ -237,7 +245,6 @@ public class GraphScript : MonoBehaviour
     IEnumerator WaitForNextStep(){
         DecreasePheromones();
         yield return new WaitForSeconds(0.5f);
-        UpdateVisualArcs();
         StartDecrease();
     }
 
@@ -246,8 +253,12 @@ public class GraphScript : MonoBehaviour
     /// Just to test
     /// </summary>
     private void StartDecrease(){
-        ACOVRP();
+        //ACOVRP();
         //StartCoroutine(WaitForNextStep());
+    }
+
+    private void StartProgram(){
+        StartCoroutine(ACOVRP());
     }
 
 
@@ -275,33 +286,29 @@ public class GraphScript : MonoBehaviour
     /// <summary>
     /// Algorithm
     /// </summary>
-    private void ACOVRP(){
+    private IEnumerator ACOVRP(){
+        
         // Initialize some parameters for the algorithm
         List<int> bestSolution = new List<int>();
-        bool[] visitedNodes = new bool[nodes.Count];
+        float bestDistance = float.MaxValue;
         int currentIteration = 0;
         int subIterations = 0;
 
         while (currentIteration < maxIterations){
-            Debug.Log("Nueva iteracion");
-            // Check if need for global pheromone update
-            if (subIterations >= iterationBlock){
-                UpdateBestCourse();
-                subIterations = 0;
-            }
-
+            Debug.Log($"Iterations: {currentIteration}");
             // Create new ant
             Ant currentAnt = new Ant(vehicleCapacity);
-
+            bool[] visitedNodes = new bool[nodes.Count];
             // Add the depot node as the start of solution
             currentAnt.AddSolutionNode(centerNode, 0f);
-
+        
             // Set depot node as visited
             visitedNodes[centerNode] = true;
 
             // The pheromones of the colony to follow
             int currentColony = 0;
             int currentNode = centerNode;
+            float currentDistance = 0;
 
             // Loop to build a solution
             while(!AllVisited(visitedNodes)){
@@ -315,22 +322,47 @@ public class GraphScript : MonoBehaviour
 
                 float demand = nodes[nextNode].GetDemand();
                 currentAnt.AddSolutionNode(nextNode, demand);
+                currentDistance += CalculateDistanceBetweenNodes(currentColony, currentNode, nextNode);
 
                 visitedNodes[nextNode] = true;
-                currentNode = nextNode;
 
+                currentNode = nextNode;
                 if (currentAnt.HasMaxCapacity()){
                         currentAnt.AddSolutionNode(centerNode, 0f);
+                        currentDistance += CalculateDistanceBetweenNodes(currentColony, currentNode, centerNode);
+
                         currentAnt.ResetCapacity();
                         currentNode = centerNode;
                 }
             }
-            currentAnt.AddSolutionNode(centerNode, 0f);
-            bestSolution = currentAnt.GetSolution();
+
+            if (currentNode != centerNode){
+                currentAnt.AddSolutionNode(centerNode, 0f);
+                currentDistance += CalculateDistanceBetweenNodes(currentColony, currentNode, centerNode);
+            }
+            
+            Debug.Log($"Iteration {currentIteration}, Solution distance: {currentDistance}, Best distance: {bestDistance}");
+            UpdatePheromoneTrails(currentAnt.GetSolution(), currentDistance);
+
+            if (currentDistance < bestDistance){
+                bestSolution = currentAnt.GetSolution();
+                bestDistance = currentDistance;
+            }
+
             currentIteration += 1;
+            subIterations += 1;
+            
+            // Check if need for global pheromone update
+            if (subIterations >= iterationBlock){
+                UpdatePheromoneTrails(bestSolution, bestDistance);
+                subIterations = 0;
+            }
+
+            UpdateVisualArcs();
+            ShowBestSolution(bestSolution);
+            yield return new WaitForSeconds(0f);
         }
 
-        ShowBestSolution(bestSolution);
     }
 
 
@@ -341,10 +373,31 @@ public class GraphScript : MonoBehaviour
 
 
     /// <summary>
+    /// Updates the pheromones in the trails
+    /// <summary>
+    private void UpdatePheromoneTrails(List<int> solution, float solutionDistance){
+        int nodeA = solution[0];
+        int nodeB = 0;
+        int currentColony = 0;
+        for (int i=1; i<solution.Count; i++){
+            nodeB = solution[i];
+            string arcId = GetArcId(currentColony, nodeA, nodeB);
+            colonies[currentColony][arcId].PheromoneVariation(pheromoneDropFactor/solutionDistance);
+            nodeA = nodeB;
+        }
+
+        foreach (Dictionary<string, Arc> colony in colonies.Values){
+            foreach(Arc arc in colony.Values){
+                arc.PheromoneEvaporation(pheromoneEvaporation);
+            }
+        }
+    }
+
+
+    /// <summary>
     /// Tells if all the nodes have been visited
     /// </summary>
     private bool AllVisited(bool[] nodesVisited){
-        Debug.Log("All visited");
         for (int i=0; i<nodesVisited.Length; i++){
             if (!nodesVisited[i]){
                 return false;
@@ -358,10 +411,10 @@ public class GraphScript : MonoBehaviour
     /// Follows the pheromones and returns the node where the ant will move
     /// </summary>
     private int FollowPheromones(int currentColony, int currentNode, bool[] visitedNodes){
-        Debug.Log("Follow Phermones");
         Dictionary<string, Arc> colonyArcs = colonies[currentColony];
         List<string> nodeArcs = GetNodeArcs(currentNode, colonyArcs);
         List<string> arcIdsToConsider = FilterByVisitedNodes(currentNode, visitedNodes, nodeArcs);
+        List<string> arcCandidates = OrderCandidates(arcIdsToConsider, currentColony);
         int selectedNode = GetMaxPheromone(currentNode, arcIdsToConsider, colonyArcs);
         return selectedNode;
     }
@@ -374,6 +427,7 @@ public class GraphScript : MonoBehaviour
         Dictionary<string, Arc> colonyArcs = colonies[currentColony];
         List<string> nodeArcs = GetNodeArcs(currentNode, colonyArcs);
         List<string> arcIdsToConsider = FilterByVisitedNodes(currentNode, visitedNodes, nodeArcs);
+        List<string> arcCandidates = OrderCandidates(arcIdsToConsider, currentColony);
         int selectedNode = GetNodeFromProbabilityDistribution(currentNode, arcIdsToConsider, colonyArcs);
         return selectedNode;
     }
@@ -397,7 +451,7 @@ public class GraphScript : MonoBehaviour
     private List<string> FilterByVisitedNodes(int currentNode, bool[] visitedNodes, List<string>nodeArcs){
         List<string> filteredArcs = new List<string>();
         foreach(string arcId in nodeArcs){
-            int otherId = GetOtherArcId(arcId, currentNode);
+            int otherId = GetOtherNodeId(arcId, currentNode);
             if (!visitedNodes[otherId]){
                 filteredArcs.Add(arcId);
             }
@@ -407,10 +461,34 @@ public class GraphScript : MonoBehaviour
 
     
     /// <summary>
+    /// Filter the nodes by the candidate list size, order them by weight
+    /// </summary>
+    private List<string> OrderCandidates(List<string> nodeArcs, int currentColony){
+        List<string> orderedArcs = new List<string>();
+        int max = Mathf.Min(candidateListSize, nodeArcs.Count);
+        for (int i=0; i<max; i++){
+            float localMin = float.MaxValue;
+            string minArc = "";
+            foreach(string arcId in nodeArcs){
+                if (!orderedArcs.Contains(arcId)){
+                    float weight = colonies[currentColony][arcId].GetWeight();
+                    if(weight <= localMin){
+                        minArc = arcId;
+                        localMin = weight;
+                    }
+                }
+            }
+            orderedArcs.Add(minArc);
+        }
+        return orderedArcs;
+    }
+
+
+    /// <summary>
     /// Gets the max pheromone node
     /// </summary>
     private int GetMaxPheromone(int currentNode, List<string> arcIds, Dictionary<string, Arc> colonyArcs){
-        float maxValue = 0f;
+        float maxValue = -1f;
         string bestArc = "";
         foreach (string arcId in arcIds){
             float arcFitness = CalculateArcFitness(arcId, colonyArcs);
@@ -420,7 +498,7 @@ public class GraphScript : MonoBehaviour
             }
         }
         
-        int bestNode = GetOtherArcId(bestArc, currentNode);
+        int bestNode = GetOtherNodeId(bestArc, currentNode);
         return bestNode;
     }
     
@@ -441,17 +519,15 @@ public class GraphScript : MonoBehaviour
         bool found = false;
         float cummulativeProb = 0f;
         while (i < arcIds.Count-1 && !found){
-            Debug.Log(i);
             float arcFitness = CalculateArcFitness(arcIds[i], colonyArcs);
             cummulativeProb += arcFitness;
             float probabilityToPickArc = arcFitness/totalProbability;
-            Debug.Log(probabilityToPickArc);
             if (probabilityToPickArc < r){
                 found = true;
             }
             i++;
         }
-        int selectedNode = GetOtherArcId(arcIds[i], currentNode);
+        int selectedNode = GetOtherNodeId(arcIds[i], currentNode);
         return selectedNode;
     }
 
@@ -461,7 +537,7 @@ public class GraphScript : MonoBehaviour
     /// </summary>
     private float CalculateArcFitness(string arcId, Dictionary<string, Arc> colonyArcs){
         float pheromone = colonyArcs[arcId].GetPheromoneLevel();
-        float distance = colonyArcs[arcId].GetWeight();
+        float distance = 1/colonyArcs[arcId].GetWeight();
         return pheromone * Mathf.Pow(distance, beta);
     }
 
@@ -469,10 +545,8 @@ public class GraphScript : MonoBehaviour
     /// <summary>
     /// Get other node id of an arc given one
     /// </summary>
-    private int GetOtherArcId(string arcId, int node){
-        Debug.Log("I get here");
+    private int GetOtherNodeId(string arcId, int node){
         string[] parsedId = arcId.Split(",");
-        Debug.Log(arcId);
         int otherId = -1;
         if (int.Parse(parsedId[0]) != node){
             otherId = int.Parse(parsedId[0]);
@@ -480,5 +554,21 @@ public class GraphScript : MonoBehaviour
             otherId = int.Parse(parsedId[1]);
         }
         return otherId;
+    }
+
+
+    /// <summary>
+    /// Build the arc id from two nodes
+    /// </summary>
+    private string GetArcId(int colony, int nodeA, int nodeB){
+        string strNodeAId = nodeA.ToString();
+        string strNodeBId = nodeB.ToString();
+        string id1 = strNodeAId + "," + strNodeBId;
+        string id2 = strNodeBId + "," + strNodeAId;
+        if (colonies[colony].ContainsKey(id1)){
+            return id1;
+        }else{
+            return id2;
+        }
     }
 }

@@ -59,7 +59,7 @@ public class ArcVisualScript : MonoBehaviour
     private void ColorLine(int colony, float alpha, bool solution){
         Color colonyColor = SelectColonyColor(solution);
         if (!solution){
-            alpha *= 0.5f;
+            alpha *= 0.7f;
         }
         Gradient gradient = new Gradient();
         gradient.SetKeys(
