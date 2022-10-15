@@ -21,11 +21,11 @@ public class NodeSpawnerScript : MonoBehaviour
         for (int i=0; i<nNodes ; i++){
             Vector2 position = new Vector2(Random.Range(-limit, limit), Random.Range(-limit, limit));
             GameObject newNode = Instantiate(nodeObject, position, Quaternion.identity);
-            newNode.GetComponent<NodeScript>().SetId(i);
-            newNode.GetComponent<NodeScript>().SetDemand(1);
+            newNode.GetComponent<NodeScript>().SetId(i+1);
+            newNode.GetComponent<NodeScript>().SetDemand(50);
             if (!center){
                 newNode.GetComponent<NodeScript>().SetCenter();
-                newNode.GetComponent<NodeScript>().SetDemand(0);
+                newNode.GetComponent<NodeScript>().SetDemand(50);
                 center = true;
             }
         }
@@ -40,6 +40,7 @@ public class NodeSpawnerScript : MonoBehaviour
 
         Destroy(FindObjectOfType<CanvasScript>().gameObject);
 
+        //SpawnRandomly();
         SpawnC1();
     }
 
