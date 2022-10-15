@@ -17,8 +17,8 @@ public class GraphScript : MonoBehaviour
     private float currentPheromoneWasted;
     private int nAntColonies = 1;
     private int centerNode = 0;
-    private float vehicleCapacity = 100f;
-    private float q0 =2f;
+    private float vehicleCapacity = 101f;
+    private float q0 = 0f;
     private float initialPheromone = 0.1f;
     private float beta = 2.3f;
 
@@ -95,6 +95,10 @@ public class GraphScript : MonoBehaviour
         public void AddSolutionNode(int newNode, float nodeDemand){
             solution.Add(newNode);
             currentCapacity += nodeDemand;
+        }
+
+        public void ResetCapacity(){
+            this.currentCapacity = 0f;
         }
 
     }
@@ -298,19 +302,27 @@ public class GraphScript : MonoBehaviour
             // The pheromones of the colony to follow
             int currentColony = 0;
             int currentNode = centerNode;
+
             // Loop to build a solution
             while(!AllVisited(visitedNodes)){
-                Debug.Log("Creating solution");
                 float random = Random.Range(0f, 1f);
+                int nextNode = 0;
                 if (random <= q0){
-                    int nextNode = FollowPheromones(currentColony, currentNode, visitedNodes);
-                    float demand = nodes[nextNode].GetDemand();
-                    currentAnt.AddSolutionNode(nextNode, demand);
-
-                    visitedNodes[nextNode] = true;
-                    currentNode = nextNode;
+                    nextNode = FollowPheromones(currentColony, currentNode, visitedNodes);
                 }else{
-                    
+                    nextNode = FollowRandomPath(currentColony, currentNode, visitedNodes);
+                }
+
+                float demand = nodes[nextNode].GetDemand();
+                currentAnt.AddSolutionNode(nextNode, demand);
+
+                visitedNodes[nextNode] = true;
+                currentNode = nextNode;
+
+                if (currentAnt.HasMaxCapacity()){
+                        currentAnt.AddSolutionNode(centerNode, 0f);
+                        currentAnt.ResetCapacity();
+                        currentNode = centerNode;
                 }
             }
             currentAnt.AddSolutionNode(centerNode, 0f);
@@ -356,10 +368,21 @@ public class GraphScript : MonoBehaviour
 
 
     /// <summary>
+    /// Follows a random paht
+    /// </summary>
+    private int FollowRandomPath(int currentColony, int currentNode, bool[] visitedNodes){
+        Dictionary<string, Arc> colonyArcs = colonies[currentColony];
+        List<string> nodeArcs = GetNodeArcs(currentNode, colonyArcs);
+        List<string> arcIdsToConsider = FilterByVisitedNodes(currentNode, visitedNodes, nodeArcs);
+        int selectedNode = GetNodeFromProbabilityDistribution(currentNode, arcIdsToConsider, colonyArcs);
+        return selectedNode;
+    }
+
+
+    /// <summary>
     /// Returns the keys of the arcs that are connected to a node
     /// </summary>
     private List<string> GetNodeArcs(int node, Dictionary<string, Arc> colonyArcs){
-        Debug.Log("PheromoneArcs");
         string strNodeId = node.ToString();
         string id1 = ","+strNodeId;
         string id2 = strNodeId + ",";
@@ -390,9 +413,7 @@ public class GraphScript : MonoBehaviour
         float maxValue = 0f;
         string bestArc = "";
         foreach (string arcId in arcIds){
-            float pheromone = colonyArcs[arcId].GetPheromoneLevel();
-            float distance = colonyArcs[arcId].GetWeight();
-            float arcFitness = pheromone * Mathf.Pow(distance, beta);
+            float arcFitness = CalculateArcFitness(arcId, colonyArcs);
             if (arcFitness > maxValue){
                 maxValue = arcFitness;
                 bestArc = arcId;
@@ -405,10 +426,53 @@ public class GraphScript : MonoBehaviour
     
 
     /// <summary>
+    /// Gets a node from a random probability distribution
+    /// </summary>
+    private int GetNodeFromProbabilityDistribution(int currentNode, List<string> arcIds, Dictionary<string, Arc> colonyArcs){
+        float totalProbability = 0f;
+        foreach(string arcId in arcIds){
+            float arcFitness = CalculateArcFitness(arcId, colonyArcs);
+            totalProbability += arcFitness; 
+        }
+
+        
+        int i = 0;
+        float r = Random.Range(0f, 1f);
+        bool found = false;
+        float cummulativeProb = 0f;
+        while (i < arcIds.Count-1 && !found){
+            Debug.Log(i);
+            float arcFitness = CalculateArcFitness(arcIds[i], colonyArcs);
+            cummulativeProb += arcFitness;
+            float probabilityToPickArc = arcFitness/totalProbability;
+            Debug.Log(probabilityToPickArc);
+            if (probabilityToPickArc < r){
+                found = true;
+            }
+            i++;
+        }
+        int selectedNode = GetOtherArcId(arcIds[i], currentNode);
+        return selectedNode;
+    }
+
+
+    /// <summary>
+    /// Calculates the fitness of the arc based on the formula of the paper
+    /// </summary>
+    private float CalculateArcFitness(string arcId, Dictionary<string, Arc> colonyArcs){
+        float pheromone = colonyArcs[arcId].GetPheromoneLevel();
+        float distance = colonyArcs[arcId].GetWeight();
+        return pheromone * Mathf.Pow(distance, beta);
+    }
+
+
+    /// <summary>
     /// Get other node id of an arc given one
     /// </summary>
     private int GetOtherArcId(string arcId, int node){
+        Debug.Log("I get here");
         string[] parsedId = arcId.Split(",");
+        Debug.Log(arcId);
         int otherId = -1;
         if (int.Parse(parsedId[0]) != node){
             otherId = int.Parse(parsedId[0]);
