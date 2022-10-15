@@ -12,18 +12,17 @@ public class GraphScript : MonoBehaviour
     [SerializeField] GameObject arcVisualObject;
 
     [Header("Algorithm parameters")]
-    private int maxIterations = 5000;
-    private int iterationBlock = 25;
-    private float currentPheromoneWasted;
+    private int maxIterations = 2000;
+    private int antsNumber = 25;
     private int nAntColonies = 1;
     private int centerNode = 0;
     private float vehicleCapacity = 101f;
-    private float q0 = 0.9f;
+    private float q0 = 0.2f;
     private float initialPheromone = 0.001f;
     private float beta = 2.3f;
     private float pheromoneDropFactor = 1f;
     private float pheromoneEvaporation = 0.1f;
-    private int candidateListSize = 5;
+    private int candidateListSize = 50;
 
     [Header("Solution parameters")]
     private float minDistance = float.MaxValue;
@@ -68,6 +67,7 @@ public class GraphScript : MonoBehaviour
             this.pheromoneLevel += variation;
             if (this.pheromoneLevel < 0){
                 pheromoneLevel = 0f;
+                Debug.Log("Menor que cero");
             }
         }
 
@@ -290,78 +290,88 @@ public class GraphScript : MonoBehaviour
         
         // Initialize some parameters for the algorithm
         List<int> bestSolution = new List<int>();
+
         float bestDistance = float.MaxValue;
         int currentIteration = 0;
-        int subIterations = 0;
 
         while (currentIteration < maxIterations){
-            Debug.Log($"Iterations: {currentIteration}");
-            // Create new ant
-            Ant currentAnt = new Ant(vehicleCapacity);
-            bool[] visitedNodes = new bool[nodes.Count];
-            // Add the depot node as the start of solution
-            currentAnt.AddSolutionNode(centerNode, 0f);
-        
-            // Set depot node as visited
-            visitedNodes[centerNode] = true;
+            List<List<int>> solutions = new List<List<int>>();
+            List<float> solutionDistances = new List<float>();
 
-            // The pheromones of the colony to follow
-            int currentColony = 0;
-            int currentNode = centerNode;
-            float currentDistance = 0;
-
-            // Loop to build a solution
-            while(!AllVisited(visitedNodes)){
-                float random = Random.Range(0f, 1f);
-                int nextNode = 0;
-                if (random <= q0){
-                    nextNode = FollowPheromones(currentColony, currentNode, visitedNodes);
-                }else{
-                    nextNode = FollowRandomPath(currentColony, currentNode, visitedNodes);
-                }
-
-                float demand = nodes[nextNode].GetDemand();
-                currentAnt.AddSolutionNode(nextNode, demand);
-                currentDistance += CalculateDistanceBetweenNodes(currentColony, currentNode, nextNode);
-
-                visitedNodes[nextNode] = true;
-
-                currentNode = nextNode;
-                if (currentAnt.HasMaxCapacity()){
-                        currentAnt.AddSolutionNode(centerNode, 0f);
-                        currentDistance += CalculateDistanceBetweenNodes(currentColony, currentNode, centerNode);
-
-                        currentAnt.ResetCapacity();
-                        currentNode = centerNode;
-                }
-            }
-
-            if (currentNode != centerNode){
+            for (int i=0; i<antsNumber; i++){
+                // Create new ant
+                Ant currentAnt = new Ant(vehicleCapacity);
+                bool[] visitedNodes = new bool[nodes.Count];
+                // Add the depot node as the start of solution
                 currentAnt.AddSolutionNode(centerNode, 0f);
-                currentDistance += CalculateDistanceBetweenNodes(currentColony, currentNode, centerNode);
-            }
             
-            Debug.Log($"Iteration {currentIteration}, Solution distance: {currentDistance}, Best distance: {bestDistance}");
-            UpdatePheromoneTrails(currentAnt.GetSolution(), currentDistance);
+                // Set depot node as visited
+                visitedNodes[centerNode] = true;
 
-            if (currentDistance < bestDistance){
-                bestSolution = currentAnt.GetSolution();
-                bestDistance = currentDistance;
+                // The pheromones of the colony to follow
+                int currentColony = 0;
+                int currentNode = centerNode;
+                float currentDistance = 0;
+
+                // Loop to build a solution
+                while(!AllVisited(visitedNodes)){
+                    float random = Random.Range(0f, 1f);
+                    int nextNode = 0;
+                    if (random <= q0){
+                        nextNode = FollowPheromones(currentColony, currentNode, visitedNodes);
+                    }else{
+                        nextNode = FollowRandomPath(currentColony, currentNode, visitedNodes);
+                    }
+
+                    float demand = nodes[nextNode].GetDemand();
+                    currentAnt.AddSolutionNode(nextNode, demand);
+                    currentDistance += CalculateDistanceBetweenNodes(currentColony, currentNode, nextNode);
+
+                    visitedNodes[nextNode] = true;
+
+                    currentNode = nextNode;
+                    if (currentAnt.HasMaxCapacity()){
+                            currentAnt.AddSolutionNode(centerNode, 0f);
+                            currentDistance += CalculateDistanceBetweenNodes(currentColony, currentNode, centerNode);
+
+                            currentAnt.ResetCapacity();
+                            currentNode = centerNode;
+                    }
+                }
+
+                if (currentNode != centerNode){
+                    currentAnt.AddSolutionNode(centerNode, 0f);
+                    currentDistance += CalculateDistanceBetweenNodes(currentColony, currentNode, centerNode);
+                }
+
+                solutionDistances.Add(currentDistance);
+                solutions.Add(currentAnt.GetSolution());
+                if (currentDistance < bestDistance){
+                    bestSolution = currentAnt.GetSolution();
+                    bestDistance = currentDistance;
+                }
+                UpdateVisualArcs();
+                ShowBestSolution(currentAnt.GetSolution());
+                yield return new WaitForSeconds(0.01f);
             }
 
+            UpdateEvaporationInTrails();
+            for (int i=0; i<solutions.Count; i++){
+                UpdatePheromoneTrails(solutions[i], solutionDistances[i]);
+            }
+            UpdatePheromoneTrails(bestSolution, bestDistance);
+
+            Debug.Log($"Iteration {currentIteration}, Best distance: {bestDistance}");
             currentIteration += 1;
-            subIterations += 1;
             
-            // Check if need for global pheromone update
-            if (subIterations >= iterationBlock){
-                UpdatePheromoneTrails(bestSolution, bestDistance);
-                subIterations = 0;
-            }
-
             UpdateVisualArcs();
             ShowBestSolution(bestSolution);
-            yield return new WaitForSeconds(0f);
+            yield return new WaitForSeconds(1f);
         }
+
+        
+        UpdateVisualArcs();
+        ShowBestSolution(bestSolution);
 
     }
 
@@ -385,7 +395,13 @@ public class GraphScript : MonoBehaviour
             colonies[currentColony][arcId].PheromoneVariation(pheromoneDropFactor/solutionDistance);
             nodeA = nodeB;
         }
+    }
 
+    
+    /// <summary>
+    /// Evaporate trails
+    /// </summary>
+    private void UpdateEvaporationInTrails(){
         foreach (Dictionary<string, Arc> colony in colonies.Values){
             foreach(Arc arc in colony.Values){
                 arc.PheromoneEvaporation(pheromoneEvaporation);
@@ -415,7 +431,7 @@ public class GraphScript : MonoBehaviour
         List<string> nodeArcs = GetNodeArcs(currentNode, colonyArcs);
         List<string> arcIdsToConsider = FilterByVisitedNodes(currentNode, visitedNodes, nodeArcs);
         List<string> arcCandidates = OrderCandidates(arcIdsToConsider, currentColony);
-        int selectedNode = GetMaxPheromone(currentNode, arcIdsToConsider, colonyArcs);
+        int selectedNode = GetMaxPheromone(currentNode, arcCandidates, colonyArcs);
         return selectedNode;
     }
 
@@ -428,7 +444,7 @@ public class GraphScript : MonoBehaviour
         List<string> nodeArcs = GetNodeArcs(currentNode, colonyArcs);
         List<string> arcIdsToConsider = FilterByVisitedNodes(currentNode, visitedNodes, nodeArcs);
         List<string> arcCandidates = OrderCandidates(arcIdsToConsider, currentColony);
-        int selectedNode = GetNodeFromProbabilityDistribution(currentNode, arcIdsToConsider, colonyArcs);
+        int selectedNode = GetNodeFromProbabilityDistribution(currentNode, arcCandidates, colonyArcs);
         return selectedNode;
     }
 
@@ -441,6 +457,7 @@ public class GraphScript : MonoBehaviour
         string id1 = ","+strNodeId;
         string id2 = strNodeId + ",";
         List<string> nodeArcs = colonyArcs.Keys.Where(arcId => arcId.Contains(id1) || arcId.Contains(id2)).ToList<string>();
+
         return nodeArcs;
     }
 
@@ -512,20 +529,24 @@ public class GraphScript : MonoBehaviour
             float arcFitness = CalculateArcFitness(arcId, colonyArcs);
             totalProbability += arcFitness; 
         }
-
         
         int i = 0;
         float r = Random.Range(0f, 1f);
         bool found = false;
         float cummulativeProb = 0f;
-        while (i < arcIds.Count-1 && !found){
+
+        while (i < arcIds.Count && !found){
             float arcFitness = CalculateArcFitness(arcIds[i], colonyArcs);
-            cummulativeProb += arcFitness;
             float probabilityToPickArc = arcFitness/totalProbability;
-            if (probabilityToPickArc < r){
+            cummulativeProb += probabilityToPickArc;
+            if (cummulativeProb > r){
                 found = true;
+            }else{
+                i++;
             }
-            i++;
+        }
+        if(i >= arcIds.Count){
+            i--;
         }
         int selectedNode = GetOtherNodeId(arcIds[i], currentNode);
         return selectedNode;

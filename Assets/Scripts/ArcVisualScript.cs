@@ -6,6 +6,7 @@ public class ArcVisualScript : MonoBehaviour
 {
     private LineRenderer arcRenderer;
     private Transform[] arcPoints;
+    [SerializeField] List<Color>colonyColors;
 
 
     /// <summary>
@@ -57,9 +58,9 @@ public class ArcVisualScript : MonoBehaviour
     /// Sets the color and gradient of the line
     /// </summary>
     private void ColorLine(int colony, float alpha, bool solution){
-        Color colonyColor = SelectColonyColor(solution);
+        Color colonyColor = SelectColonyColor(colony, solution);
         if (!solution){
-            alpha *= 0.7f;
+            alpha *= 0.9f;
         }
         Gradient gradient = new Gradient();
         gradient.SetKeys(
@@ -72,10 +73,13 @@ public class ArcVisualScript : MonoBehaviour
     /// <summary>
     /// Selects the colony color
     /// </summary>
-    private Color SelectColonyColor(bool solution){
+    private Color SelectColonyColor(int colony, bool solution){
         if (solution){
             return Color.black;
         }
-        return Color.red;
+        else {
+            int colorNumber = colony % colonyColors.Count;
+            return colonyColors[colorNumber];
+        }
     }
 }
