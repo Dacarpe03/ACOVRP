@@ -32,6 +32,19 @@ public class GraphScript : MonoBehaviour
     private Dictionary<int, Dictionary<string, Arc>> colonies = new Dictionary<int, Dictionary<string, Arc>>();
 
 
+    public void Initialize(int iterations, int numberAnts, float vehicleCapacity, float q0, float beta, float pheromoneDropFactor, float pheromoneEvaporation, int candidateListSize, bool multipleColonies){
+        this.maxIterations = iterations;
+        this.antsNumber = numberAnts;
+        this.vehicleCapacity = vehicleCapacity;
+        this.q0 = q0;
+        this.beta = beta;
+        this.pheromoneDropFactor = pheromoneDropFactor;
+        this.pheromoneEvaporation = pheromoneEvaporation;
+        this.candidateListSize = candidateListSize;
+        this.multipleColonies = multipleColonies;
+    }
+
+
     /// <summary>
     /// Class containing info of an arc
     /// </summary>

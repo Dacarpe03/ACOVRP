@@ -9,14 +9,18 @@ public class NodeSpawnerScript : MonoBehaviour
     [SerializeField] private int nNodes = 5;
     [SerializeField] private float limit = 50f;
     private float capacityOne = 160f;
+    private float capacityThree = 160f;
+    private float capacityFour = 160f;
 
     [Header("Node Prefab")]
     [SerializeField] GameObject nodeObject;
 
+    private int problem;
+
     [Header("Algorithm parameters")]
     private int iterations = 100;
     private int numberAnts = 25;
-    private float vehicleCapacity = 160f;
+    private float vehicleCapacity = 1f;
     private float q0 = 0.9f;
     private float beta = 2.3f;
     private float pheromoneDropFactor = 1f;
@@ -30,13 +34,14 @@ public class NodeSpawnerScript : MonoBehaviour
     private void SpawnRandomly() {
         bool center = false;
         for (int i=0; i<nNodes ; i++){
+            Debug.Log(i);
             Vector2 position = new Vector2(Random.Range(-limit, limit), Random.Range(-limit, limit));
             GameObject newNode = Instantiate(nodeObject, position, Quaternion.identity);
             newNode.GetComponent<NodeScript>().SetId(i+1);
             newNode.GetComponent<NodeScript>().SetDemand(50);
             if (!center){
                 newNode.GetComponent<NodeScript>().SetCenter();
-                newNode.GetComponent<NodeScript>().SetDemand(50);
+                newNode.GetComponent<NodeScript>().SetDemand(10);
                 center = true;
             }
         }
@@ -45,23 +50,48 @@ public class NodeSpawnerScript : MonoBehaviour
 
 
     /// <summary>
-    /// Gets a the configuration parameters of the algorithm
+    /// Initialize graph
     /// </summary>
-    public void GetData(){
+    private void InitializeGraph(int problem){
+        if (problem == 1 && vehicleCapacity == 1f){
+            vehicleCapacity = capacityOne;
+        }
+        else if (problem == 3 && vehicleCapacity == 1f){
+            vehicleCapacity = capacityThree;
+        }
+        else if (problem == 4 && vehicleCapacity == 1f){
+            vehicleCapacity = capacityFour;
+        }
+        
 
-        Destroy(FindObjectOfType<CanvasScript>().gameObject);
-
-        //SpawnRandomly();
-        SpawnC1();
+        FindObjectOfType<GraphScript>().Initialize(iterations, numberAnts, vehicleCapacity, q0, beta, pheromoneDropFactor, pheromoneEvaporation, candidateListSize, multipleColonies);
+        FindObjectOfType<GraphScript>().GetNodes();
     }
-
 
     /// <summary>
     /// Updates the number of nodes
     /// </summary>
-    public void ReadNumberNodes(string nNodesStr){
-        if (nNodesStr != ""){
-            nNodes = int.Parse(nNodesStr);
+    public void ReadProblem(int p){
+
+        Debug.Log(problem);
+    }
+
+    /// <summary>
+    /// Gets a the configuration parameters of the algorithm
+    /// </summary>
+    public void GetData(int problem){
+
+        Destroy(FindObjectOfType<CanvasScript>().gameObject);
+
+        if (problem == 1){
+
+            SpawnC1();
+        } else if (problem == 3){
+            
+        } else if (problem == 4){
+            
+        } else{
+            SpawnRandomly();
         }
     }
 
@@ -405,8 +435,7 @@ public class NodeSpawnerScript : MonoBehaviour
         newNode.GetComponent<NodeScript>().SetDemand(0f);
         newNode.GetComponent<NodeScript>().SetCenter();
 
-        FindObjectOfType<GraphScript>().SetCapacity(this.capacityOne);
-        FindObjectOfType<GraphScript>().GetNodes();
+        this.InitializeGraph(1);
     }
 
 }

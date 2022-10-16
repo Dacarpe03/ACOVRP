@@ -5,8 +5,8 @@ using UnityEngine;
 
 public class CanvasScript : MonoBehaviour
 {
-    public void StartSimulation()
+    public void StartSimulation(int problem)
     {
-        FindObjectOfType<NodeSpawnerScript>().GetData();
+        FindObjectOfType<NodeSpawnerScript>().GetData(problem);
     }
 }
