@@ -2,22 +2,24 @@ using System.Collections;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 using UnityEngine.SceneManagement;
 
 public class GraphScript : MonoBehaviour
 {
+    [SerializeField] public TextMeshProUGUI displaytext;
     private Dictionary<int, NodeScript> nodes = new Dictionary<int, NodeScript>();
 
     [Header("Arc Prefab")]
     [SerializeField] GameObject arcVisualObject;
 
     [Header("Algorithm parameters")]
-    private bool multipleColonies = true;
+    private bool multipleColonies = false;
     private int maxIterations = 2000;
     private int antsNumber = 25;
     private int nAntColonies = 1;
     private int centerNode = 0;
-    private float vehicleCapacity = 51;
+    private float vehicleCapacity = 50f;
     private float q0 = 0.2f;
     private float initialPheromone = 0.001f;
     private float beta = 2.3f;
@@ -30,6 +32,19 @@ public class GraphScript : MonoBehaviour
 
     [Header("Arcs of the graph")]
     private Dictionary<int, Dictionary<string, Arc>> colonies = new Dictionary<int, Dictionary<string, Arc>>();
+
+
+    public void Initialize(int iterations, int numberAnts, float vehicleCapacity, float q0, float beta, float pheromoneDropFactor, float pheromoneEvaporation, int candidateListSize, bool multipleColonies){
+        this.maxIterations = iterations;
+        this.antsNumber = numberAnts;
+        this.vehicleCapacity = vehicleCapacity;
+        this.q0 = q0;
+        this.beta = beta;
+        this.pheromoneDropFactor = pheromoneDropFactor;
+        this.pheromoneEvaporation = pheromoneEvaporation;
+        this.candidateListSize = candidateListSize;
+        this.multipleColonies = multipleColonies;
+    }
 
 
     /// <summary>
@@ -108,14 +123,6 @@ public class GraphScript : MonoBehaviour
             this.currentCapacity = 0f;
         }
 
-    }
-
-
-    /// <summary>
-    /// Sets the capacity of the vehicles
-    /// </summary>
-    public void SetCapacity(float capacity){
-        this.vehicleCapacity = capacity;
     }
 
 
@@ -207,7 +214,6 @@ public class GraphScript : MonoBehaviour
         for (int i = 0; i < maxColony+1; i++){
             Dictionary<string, Arc> arcs = colonies[i];
             float maxPheromone = GetMaxPheromoneInColony(arcs);
-            Debug.Log("Next colony");
             foreach (Arc arc in arcs.Values){
                 GameObject newArcVisual = Instantiate(arcVisualObject, this.transform.position, Quaternion.identity);
                 Transform[] nodesTransforms = {nodes[arc.GetNodeA()].GetTransform(), nodes[arc.GetNodeB()].GetTransform()};
@@ -294,7 +300,7 @@ public class GraphScript : MonoBehaviour
             List<float> solutionDistances = new List<float>();
             for (int i=0; i<antsNumber; i++){
                 // Create new ant
-                Ant currentAnt = new Ant(vehicleCapacity);
+                Ant currentAnt = new Ant(this.vehicleCapacity);
                 bool[] visitedNodes = new bool[nodes.Count];
                 // Add the depot node as the start of solution
                 currentAnt.AddSolutionNode(centerNode, 0f);
@@ -333,7 +339,6 @@ public class GraphScript : MonoBehaviour
 
                             if (multipleColonies){
                                 currentColony += 1;
-                                Debug.Log("New colony");
                                 if (!colonies.ContainsKey(currentColony)){
                                     CreateArcs(currentColony);
                                 }
@@ -363,7 +368,9 @@ public class GraphScript : MonoBehaviour
             }
             UpdatePheromoneTrails(bestSolution, bestDistance);
 
-            Debug.Log($"Iteration {currentIteration}, Best distance: {bestDistance}");
+            string textMsg = "Iteration " + currentIteration + "\nBest distance: " + bestDistance;
+            Debug.Log(textMsg);
+            displaytext.text = textMsg;
             currentIteration += 1;
             
             UpdateVisualArcs(maxColony);
@@ -374,10 +381,17 @@ public class GraphScript : MonoBehaviour
         
         UpdateVisualArcs(maxColony);
         ShowBestSolution(bestSolution);
-
+        string msg = "Best distance: " + bestDistance + "      Resetting...";
+        displaytext.text = msg;
+        yield return new WaitForSeconds(3f);
+        Reset();
     }
 
+    public void Reset(){
+        SceneManager.LoadScene(0);
+    }
 
+    
     /// <summary>
     /// Updates the arcs based on the best solution found
     /// </summary>
