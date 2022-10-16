@@ -384,9 +384,14 @@ public class GraphScript : MonoBehaviour
         string msg = "Best distance: " + bestDistance + "      Resetting...";
         displaytext.text = msg;
         yield return new WaitForSeconds(3f);
+        Reset();
     }
 
+    public void Reset(){
+        SceneManager.LoadScene(0);
+    }
 
+    
     /// <summary>
     /// Updates the arcs based on the best solution found
     /// </summary>
