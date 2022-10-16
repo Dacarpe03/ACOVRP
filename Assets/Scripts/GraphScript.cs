@@ -12,12 +12,12 @@ public class GraphScript : MonoBehaviour
     [SerializeField] GameObject arcVisualObject;
 
     [Header("Algorithm parameters")]
-    private bool multipleColonies = true;
+    private bool multipleColonies = false;
     private int maxIterations = 2000;
     private int antsNumber = 25;
     private int nAntColonies = 1;
     private int centerNode = 0;
-    private float vehicleCapacity = 51;
+    private float vehicleCapacity = 1f;
     private float q0 = 0.2f;
     private float initialPheromone = 0.001f;
     private float beta = 2.3f;
@@ -99,6 +99,7 @@ public class GraphScript : MonoBehaviour
         private float currentCapacity;
         
         public Ant(float maxCapacity){
+            Debug.Log("Max capacity:" + maxCapacity);
             this.solution = new List<int>();
             this.maxCapacity = maxCapacity;
             this.currentCapacity = 0f;
@@ -121,14 +122,6 @@ public class GraphScript : MonoBehaviour
             this.currentCapacity = 0f;
         }
 
-    }
-
-
-    /// <summary>
-    /// Sets the capacity of the vehicles
-    /// </summary>
-    public void SetCapacity(float capacity){
-        this.vehicleCapacity = capacity;
     }
 
 
@@ -220,7 +213,6 @@ public class GraphScript : MonoBehaviour
         for (int i = 0; i < maxColony+1; i++){
             Dictionary<string, Arc> arcs = colonies[i];
             float maxPheromone = GetMaxPheromoneInColony(arcs);
-            Debug.Log("Next colony");
             foreach (Arc arc in arcs.Values){
                 GameObject newArcVisual = Instantiate(arcVisualObject, this.transform.position, Quaternion.identity);
                 Transform[] nodesTransforms = {nodes[arc.GetNodeA()].GetTransform(), nodes[arc.GetNodeB()].GetTransform()};
@@ -307,7 +299,7 @@ public class GraphScript : MonoBehaviour
             List<float> solutionDistances = new List<float>();
             for (int i=0; i<antsNumber; i++){
                 // Create new ant
-                Ant currentAnt = new Ant(vehicleCapacity);
+                Ant currentAnt = new Ant(this.vehicleCapacity);
                 bool[] visitedNodes = new bool[nodes.Count];
                 // Add the depot node as the start of solution
                 currentAnt.AddSolutionNode(centerNode, 0f);
