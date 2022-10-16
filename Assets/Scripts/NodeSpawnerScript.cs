@@ -27,6 +27,7 @@ public class NodeSpawnerScript : MonoBehaviour
     private float pheromoneEvaporation = 0.1f;
     private int candidateListSize = 50;
     private bool multipleColonies = false;
+    private bool showAll = false;
 
     /// <summary>
     /// Spawns a series of nodes with random positions
@@ -45,7 +46,7 @@ public class NodeSpawnerScript : MonoBehaviour
             }
         }
 
-        FindObjectOfType<GraphScript>().Initialize(iterations, numberAnts, vehicleCapacity, q0, beta, pheromoneDropFactor, pheromoneEvaporation, candidateListSize, multipleColonies);
+        FindObjectOfType<GraphScript>().Initialize(iterations, numberAnts, vehicleCapacity, q0, beta, pheromoneDropFactor, pheromoneEvaporation, candidateListSize, multipleColonies, showAll);
         FindObjectOfType<GraphScript>().GetNodes();
     }
 
@@ -64,7 +65,7 @@ public class NodeSpawnerScript : MonoBehaviour
             vehicleCapacity = capacityFour;
         }
 
-        FindObjectOfType<GraphScript>().Initialize(iterations, numberAnts, vehicleCapacity, q0, beta, pheromoneDropFactor, pheromoneEvaporation, candidateListSize, multipleColonies);
+        FindObjectOfType<GraphScript>().Initialize(iterations, numberAnts, vehicleCapacity, q0, beta, pheromoneDropFactor, pheromoneEvaporation, candidateListSize, multipleColonies, showAll);
         FindObjectOfType<GraphScript>().GetNodes();
     }
 
@@ -168,7 +169,10 @@ public class NodeSpawnerScript : MonoBehaviour
     public void ToggleValueChanged(bool change)
     {
         multipleColonies = !multipleColonies;
-        Debug.Log(multipleColonies);
+    }
+
+    public void ToggleShowSolutions(bool change){
+        showAll = !showAll;
     }
 
 

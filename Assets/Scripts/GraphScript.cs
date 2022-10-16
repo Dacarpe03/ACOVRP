@@ -15,7 +15,7 @@ public class GraphScript : MonoBehaviour
 
     [Header("Algorithm parameters")]
     private bool multipleColonies = false;
-    private int maxIterations = 2000;
+    private int maxIterations = 100;
     private int antsNumber = 25;
     private int nAntColonies = 1;
     private int centerNode = 0;
@@ -29,12 +29,13 @@ public class GraphScript : MonoBehaviour
 
     [Header("Solution parameters")]
     private float minDistance = float.MaxValue;
+    private bool showAll = false;
 
     [Header("Arcs of the graph")]
     private Dictionary<int, Dictionary<string, Arc>> colonies = new Dictionary<int, Dictionary<string, Arc>>();
 
 
-    public void Initialize(int iterations, int numberAnts, float vehicleCapacity, float q0, float beta, float pheromoneDropFactor, float pheromoneEvaporation, int candidateListSize, bool multipleColonies){
+    public void Initialize(int iterations, int numberAnts, float vehicleCapacity, float q0, float beta, float pheromoneDropFactor, float pheromoneEvaporation, int candidateListSize, bool multipleColonies, bool showAll){
         this.maxIterations = iterations;
         this.antsNumber = numberAnts;
         this.vehicleCapacity = vehicleCapacity;
@@ -44,6 +45,7 @@ public class GraphScript : MonoBehaviour
         this.pheromoneEvaporation = pheromoneEvaporation;
         this.candidateListSize = candidateListSize;
         this.multipleColonies = multipleColonies;
+        this.showAll = showAll;
     }
 
 
@@ -238,40 +240,8 @@ public class GraphScript : MonoBehaviour
         return maxPheromone;
     }
 
-    
-    /// <summary>
-    /// Just to test
-    /// </summary>
-    IEnumerator WaitForNextStep(){
-        DecreasePheromones();
-        yield return new WaitForSeconds(0.5f);
-        StartDecrease();
-    }
-
-
-    /// <summary>
-    /// Just to test
-    /// </summary>
-    private void StartDecrease(){
-        //ACOVRP();
-        //StartCoroutine(WaitForNextStep());
-    }
-
     private void StartProgram(){
         StartCoroutine(ACOVRP());
-    }
-
-
-    /// <summary>
-    /// Just to test
-    /// </summary>
-    private void DecreasePheromones(){
-        for (int i = 0; i < nAntColonies; i++){
-            Dictionary<string, Arc> arcs = colonies[i];
-            foreach (Arc arc in arcs.Values){
-                arc.PheromoneVariation(-1);
-            }
-        }
     }
 
     /// <summary>
@@ -360,6 +330,12 @@ public class GraphScript : MonoBehaviour
 
                 
                 maxColony = currentColony;
+                if (showAll){
+                    UpdateVisualArcs(maxColony);
+                    ShowBestSolution(currentAnt.GetSolution());
+                    yield return new WaitForSeconds(0.1f);
+                }
+
             }
             
             UpdateEvaporationInTrails();
@@ -367,6 +343,7 @@ public class GraphScript : MonoBehaviour
                 UpdatePheromoneTrails(solutions[i], solutionDistances[i]);
             }
             UpdatePheromoneTrails(bestSolution, bestDistance);
+            UpdateVisualArcs(maxColony);
 
             string textMsg = "Iteration " + currentIteration + "\nBest distance: " + bestDistance;
             Debug.Log(textMsg);
