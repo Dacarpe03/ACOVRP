@@ -8,6 +8,7 @@ using UnityEngine.SceneManagement;
 public class GraphScript : MonoBehaviour
 {
     [SerializeField] public TextMeshProUGUI displaytext;
+    [SerializeField] public TextMeshProUGUI antText;
     private Dictionary<int, NodeScript> nodes = new Dictionary<int, NodeScript>();
 
     [Header("Arc Prefab")]
@@ -226,6 +227,13 @@ public class GraphScript : MonoBehaviour
     }
 
 
+    public void DestroyAllArcs(){
+        ArcVisualScript[] allObjects = FindObjectsOfType<ArcVisualScript>();
+        foreach(ArcVisualScript arc in allObjects) {
+            Destroy(arc.gameObject);
+        }
+    }
+
     /// <summary>
     /// Gets the maximum pheromone of the colony
     /// </summary>
@@ -269,6 +277,10 @@ public class GraphScript : MonoBehaviour
             List<List<int>> solutions = new List<List<int>>();
             List<float> solutionDistances = new List<float>();
             for (int i=0; i<antsNumber; i++){
+                if (showAll){
+                    string antTe = "Ant " + (i+1).ToString();
+                    antText.text = antTe;
+                }
                 // Create new ant
                 Ant currentAnt = new Ant(this.vehicleCapacity);
                 bool[] visitedNodes = new bool[nodes.Count];
@@ -331,10 +343,12 @@ public class GraphScript : MonoBehaviour
                 
                 maxColony = currentColony;
                 if (showAll){
+                    DestroyAllArcs();
                     UpdateVisualArcs(maxColony);
                     ShowBestSolution(currentAnt.GetSolution());
                     yield return new WaitForSeconds(0.1f);
                 }
+
 
             }
             
@@ -343,14 +357,18 @@ public class GraphScript : MonoBehaviour
                 UpdatePheromoneTrails(solutions[i], solutionDistances[i]);
             }
             UpdatePheromoneTrails(bestSolution, bestDistance);
-            UpdateVisualArcs(maxColony);
 
             string textMsg = "Iteration " + currentIteration + "\nBest distance: " + bestDistance;
             Debug.Log(textMsg);
             displaytext.text = textMsg;
             currentIteration += 1;
             
+            DestroyAllArcs();
             UpdateVisualArcs(maxColony);
+            yield return new WaitForSeconds(1f);
+            if (showAll){
+                antText.text = "Best solution";
+            }
             ShowBestSolution(bestSolution);
             yield return new WaitForSeconds(1f);
         }
