@@ -34,7 +34,7 @@ public class NodeSpawnerScript : MonoBehaviour
     private void SpawnRandomly() {
         bool center = false;
         for (int i=0; i<nNodes ; i++){
-            Vector2 position = new Vector2(Random.Range(-limit, limit), Random.Range(-limit, limit));
+            Vector2 position = new Vector2(Random.Range(0, limit), Random.Range(0, limit));
             GameObject newNode = Instantiate(nodeObject, position, Quaternion.identity);
             newNode.GetComponent<NodeScript>().SetId(i+1);
             newNode.GetComponent<NodeScript>().SetDemand(10);
@@ -44,7 +44,7 @@ public class NodeSpawnerScript : MonoBehaviour
                 center = true;
             }
         }
-        
+
         FindObjectOfType<GraphScript>().Initialize(iterations, numberAnts, vehicleCapacity, q0, beta, pheromoneDropFactor, pheromoneEvaporation, candidateListSize, multipleColonies);
         FindObjectOfType<GraphScript>().GetNodes();
     }
